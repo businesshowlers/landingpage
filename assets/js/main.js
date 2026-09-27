@@ -16,6 +16,16 @@
     window.dataLayer.push(payload);
   }
 
+  // Run a handler at most once per animation frame (keeps scrolling smooth on phones)
+  function throttle(fn) {
+    var queued = false;
+    return function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; fn(); });
+    };
+  }
+
   function store(key, val) {
     try {
       if (val === undefined) return localStorage.getItem(key);
@@ -136,7 +146,7 @@
     if (bar) bar.style.transform = "scaleX(" + (max > 0 ? window.scrollY / max : 0) + ")";
   }
   onScroll();
-  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("scroll", throttle(onScroll), { passive: true });
   window.addEventListener("load", onScroll);
 
   /* ---------- Scroll lock shared by drawer + modal ---------- */
@@ -420,7 +430,7 @@
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add("in"); ro.unobserve(en.target); }
       });
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    }, { rootMargin: "0px 0px 15% 0px", threshold: 0 });
     reveals.forEach(function (el) { ro.observe(el); });
   } else {
     reveals.forEach(function (el) { el.classList.add("in"); });
@@ -433,7 +443,7 @@
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
         co.unobserve(en.target);
-        var el = en.target, end = +el.getAttribute("data-count"), t0 = null, dur = 1400;
+        var el = en.target, end = +el.getAttribute("data-count"), t0 = null, dur = 900;
         el.closest(".price").classList.add("is-counting");
         (function step(ts) {
           if (!t0) t0 = ts;
@@ -482,16 +492,18 @@
   /* ---------- Process line progress ---------- */
   var steps = $(".steps");
   if (steps) {
+    var stepEls = $$(".step", steps);
     var updateSteps = function () {
       var r = steps.getBoundingClientRect(), vh = window.innerHeight;
+      if (r.bottom < -200 || r.top > vh + 200) return; // off-screen: skip work
       var p = Math.max(0, Math.min(1, (vh * 0.85 - r.top) / (r.height + vh * 0.35)));
       if (reduceMotion) p = 1;
       steps.style.setProperty("--progress", p.toFixed(3));
-      $$(".step", steps).forEach(function (s, i, all) { s.classList.toggle("is-active", p >= i / all.length + 0.02); });
+      stepEls.forEach(function (s, i, all) { s.classList.toggle("is-active", p >= i / all.length + 0.02); });
     };
     updateSteps();
-    window.addEventListener("scroll", updateSteps, { passive: true });
-    window.addEventListener("resize", updateSteps);
+    window.addEventListener("scroll", throttle(updateSteps), { passive: true });
+    window.addEventListener("resize", throttle(updateSteps));
   }
 
   /* ---------- Portfolio rail: dots + one-time swipe hint ---------- */
@@ -510,7 +522,7 @@
       dots.forEach(function (d, i) { d.classList.toggle("on", i === idx); });
     };
     setDot();
-    rail.addEventListener("scroll", setDot, { passive: true });
+    rail.addEventListener("scroll", throttle(setDot), { passive: true });
 
     if ("IntersectionObserver" in window && !reduceMotion) {
       var hint = new IntersectionObserver(function (en) {
@@ -537,22 +549,34 @@
       updateFloating();
     }, { threshold: 0.15 }).observe($("#contact"));
   }
+  var heroH = hero.offsetHeight;
+  window.addEventListener("resize", throttle(function () { heroH = hero.offsetHeight; }));
   function updateFloating() {
-    var pastHero = window.scrollY > hero.offsetHeight * 0.45;
+    var pastHero = window.scrollY > heroH * 0.45;
     mbar.classList.toggle("is-visible", pastHero && !contactVisible);
     waFloat.classList.toggle("is-visible", window.scrollY > 300);
   }
   updateFloating();
-  window.addEventListener("scroll", updateFloating, { passive: true });
+  window.addEventListener("scroll", throttle(updateFloating), { passive: true });
+
+  /* ---------- Pause decorative animations while their section is off-screen ---------- */
+  if ("IntersectionObserver" in window) {
+    var pauser = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { en.target.classList.toggle("anim-paused", !en.isIntersecting); });
+    }, { rootMargin: "100px 0px" });
+    $$(".hero, .ticker-wrap, .plans-section, .offer, .final, .features, .trust").forEach(function (el) { pauser.observe(el); });
+  }
 
   /* ---------- Desktop: spotlight that follows the cursor on key cards ---------- */
   if (window.matchMedia("(hover: hover)").matches && !reduceMotion) {
     $$(".svc--primary, .plan, .cmp--win, .feat").forEach(function (card) {
-      card.addEventListener("pointermove", function (e) {
+      var last = null;
+      var paint = throttle(function () {
         var r = card.getBoundingClientRect();
-        card.style.setProperty("--mx", (e.clientX - r.left) + "px");
-        card.style.setProperty("--my", (e.clientY - r.top) + "px");
+        card.style.setProperty("--mx", (last.clientX - r.left) + "px");
+        card.style.setProperty("--my", (last.clientY - r.top) + "px");
       });
+      card.addEventListener("pointermove", function (e) { last = e; paint(); });
     });
   }
 })();

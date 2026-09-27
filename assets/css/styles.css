@@ -29,7 +29,7 @@
   --r-sm: 12px;
 
   --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --display: "Sora", "Plus Jakarta Sans", system-ui, sans-serif;
+  --display: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --header-h: 64px;
   --gutter: 20px;
@@ -988,7 +988,7 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -.025em; line-height: 
 .final__bg span:nth-child(2) { left: -10%; top: 30%; transform: rotate(-12deg); }
 .final__bg span:nth-child(3) { right: -10%; bottom: 26%; transform: rotate(-12deg); opacity: .3; }
 .final__inner { display: flex; flex-direction: column; align-items: center; }
-.final__mark { width: 56px; height: 56px; margin-bottom: 8px; filter: drop-shadow(0 8px 24px rgba(255, 107, 0, .5)); }
+.final__mark { width: 72px; height: 72px; margin-bottom: 8px; filter: drop-shadow(0 8px 24px rgba(255, 107, 0, .5)); }
 .final .h2 { max-width: 16ch; }
 .final .lead { margin-top: 18px; color: var(--d-muted); }
 .final__ctas { display: grid; gap: 12px; margin-top: 34px; width: 100%; max-width: 360px; }
@@ -1320,3 +1320,90 @@ html.js .price.is-counting .price__was s, html.js .price.is-done .price__was s {
 
 /* Active section link in header */
 .nav a.is-active { color: #fff; background: rgba(255, 107, 0, .14); box-shadow: inset 0 0 0 1px rgba(255, 107, 0, .35); }
+
+/* =========================================================
+   V3 — LOGO + PERFORMANCE (GPU-friendly animations only)
+   ========================================================= */
+:root { --display: var(--font); }
+h1, h2, h3 { font-weight: 800; letter-spacing: -.035em; }
+
+/* Brand wordmark: matches the official logo (HOWLERS white / DIGITALS orange, same size) */
+.brand { gap: 9px; }
+.brand__mark { width: 38px; height: 38px; }
+.brand__word { font-family: var(--font); font-weight: 800; font-size: 15.5px; line-height: 1.02; letter-spacing: .02em; }
+.brand__word span { font-size: 15.5px; letter-spacing: .02em; margin-top: 2px; color: var(--orange-2); }
+@media (max-width: 359px) { .brand__word, .brand__word span { font-size: 13.5px; } .brand__mark { width: 32px; height: 32px; } }
+
+/* Big glows: radial gradients instead of blur(80px) filters, no animation */
+.glow { filter: none; animation: none !important; }
+.glow--1 { background: radial-gradient(closest-side, rgba(255, 107, 0, .38), transparent); }
+.glow--2 { background: radial-gradient(closest-side, rgba(255, 133, 0, .14), transparent); }
+
+/* Light streaks: no filter; drift with transform/opacity only */
+.streak, .final__bg span:nth-child(2), .final__bg span:nth-child(3) { filter: none; box-shadow: 0 0 8px rgba(255, 107, 0, .6); }
+.streak { will-change: transform, opacity; }
+
+/* Hero device mock: remove repaint-heavy effects */
+.site::after { display: none; }
+.site__art .orb, .psite__art { animation: orbPulse 8s ease-in-out infinite; filter: none; }
+@keyframes orbPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+.fcard { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(20, 20, 20, .95); will-change: transform; }
+.site__art .card-a, .site__art .card-b { backdrop-filter: none; }
+
+/* Headline gradient: static (moving background re-paints the text every frame) */
+.hero__title .ln > .text-grad { animation: lineUp 1s var(--ease) both; animation-delay: var(--d, 0s); }
+
+/* Button shine: a moving highlight layer (transform) instead of animating background-position */
+.btn--shine::after, .mbar__cta::after, .hcta::after {
+  inset: 0 auto 0 0; width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent);
+  background-size: auto;
+  transform: translateX(-130%) skewX(-18deg);
+  animation: shineMove 3.4s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes shineMove { 0% { transform: translateX(-130%) skewX(-18deg); } 55%, 100% { transform: translateX(330%) skewX(-18deg); } }
+
+/* Most Popular badge: static glow */
+.plan__badge { animation: none; }
+
+/* Rotating plan border only on desktop; static gradient ring on phones/tablets */
+@media (max-width: 1023px), (hover: none) {
+  .plan--featured::before { animation: none; }
+}
+
+/* WhatsApp rings: scale + fade (compositor) instead of animating box-shadow */
+.wa-float::before, .mbar__wa::before { box-shadow: none; background: #25D366; z-index: -1; animation: waPing 2.2s ease-out infinite; will-change: transform, opacity; }
+.mbar__wa { isolation: isolate; }
+.mbar__wa::before { animation-name: waPingSoft; }
+@keyframes waPing { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(1.55); opacity: 0; } }
+@keyframes waPingSoft { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(1.18, 1.35); opacity: 0; } }
+
+/* Fewer always-running animations */
+.feat__icon .i, .trust__icon .i, .form-card__icon { animation: none; }
+
+/* Sticky bars: solid backgrounds (backdrop blur is expensive while scrolling on phones) */
+.mbar { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(13, 13, 13, .97); }
+@media (max-width: 1023px) {
+  .header.is-scrolled { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 8, 8, .96); }
+}
+
+/* Pause decorative loops while their section is off-screen (set by main.js) */
+.anim-paused, .anim-paused *, .anim-paused *::before, .anim-paused *::after { animation-play-state: paused !important; }
+.hcta { flex-shrink: 0; }
+/* Pulse dots: expanding ring via transform/opacity (no box-shadow animation) */
+.pulse { position: relative; animation: none; box-shadow: none; }
+.pulse::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: dotPing 2s ease-out infinite; will-change: transform, opacity; }
+@keyframes dotPing { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.8); opacity: 0; } }
+
+/* Snappy timing: content appears almost instantly */
+.in-up { animation-duration: .45s; }
+.in-zoom { animation-duration: .6s; }
+.hero__title .ln > span, .hero__title .ln > .text-grad { animation-duration: .55s; }
+.reveal { transform: translateY(10px); transition: opacity .35s var(--ease), transform .35s var(--ease); }
+.reveal--zoom { transform: scale(.97); }
+.reveal--left { transform: translateX(-14px); }
+.reveal--right { transform: translateX(14px); }
+.reveal.in { transform: none; }
+.services .reveal, .features .reveal, .steps .reveal, .work .reveal { transition-delay: 0s !important; }
+.modal.is-open .modal__head, .modal.is-open .field, .modal.is-open .lead-form .btn, .modal.is-open .modal__trust { animation-duration: .3s; }
