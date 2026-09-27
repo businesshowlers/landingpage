@@ -1,0 +1,8 @@
+# Netlify: clean section URLs → landing page
+/services         /index.html  200
+/website-plans    /index.html  200
+/portfolio        /index.html  200
+/why-custom-code  /index.html  200
+/process          /index.html  200
+/faq              /index.html  200
+/contact          /index.html  200

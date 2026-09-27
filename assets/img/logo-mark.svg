@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Placeholder mark. Replace this file with the official Howlers Digitals logo. -->
+  <defs>
+    <linearGradient id="g" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8500"/>
+      <stop offset="1" stop-color="#FF6B00"/>
+    </linearGradient>
+  </defs>
+  <path d="M4 9 9 3l4.5 8.5L24 33l10.5-21.5L39 3l5 6-15.2 34h-9.6L4 9Z" fill="url(#g)"/>
+  <path d="M14.5 13.5h6.2L24 21l3.3-7.5h6.2L24 34.5 14.5 13.5Z" fill="#080808" opacity=".9"/>
+  <path d="M21.4 19.2 24 25l2.6-5.8" stroke="#FF8500" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/:section(services|website-plans|portfolio|why-custom-code|process|faq|contact)", "destination": "/index.html" }
+  ]
+}
