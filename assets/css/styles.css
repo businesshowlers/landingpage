@@ -1407,3 +1407,10 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -.035em; }
 .reveal.in { transform: none; }
 .services .reveal, .features .reveal, .steps .reveal, .work .reveal { transition-delay: 0s !important; }
 .modal.is-open .modal__head, .modal.is-open .field, .modal.is-open .lead-form .btn, .modal.is-open .modal__trust { animation-duration: .3s; }
+
+/* Official logo image (header, drawer, footer) */
+.brand picture { display: block; line-height: 0; }
+.brand__logo { display: block; height: 48px; width: auto; }
+.footer .brand__logo { height: 52px; }
+@media (max-width: 359px) { .brand__logo { height: 38px; } }
+.final__mark { width: 73px; height: 72px; }
