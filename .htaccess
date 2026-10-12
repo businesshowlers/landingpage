@@ -42,4 +42,10 @@ RewriteRule ^(services|website-plans|portfolio|why-custom-code|process|faq|conta
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "SAMEORIGIN"
+
+  # Pages: browsers must re-check with the server every time, so visitors never see an old version
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+    Header unset Expires
+  </FilesMatch>
 </IfModule>
