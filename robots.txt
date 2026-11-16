@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /thank-you.html
 Disallow: /google-apps-script/
 
 Sitemap: https://offer.howlers.in/sitemap.xml

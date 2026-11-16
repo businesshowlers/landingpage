@@ -230,7 +230,7 @@
     modal.setAttribute("aria-hidden", "true");
     lockScroll(false);
     if (modalReturn && modalReturn.focus) modalReturn.focus({ preventScroll: true });
-    scheduleAuto(CFG.popupSecondDelay || 15000);
+    if (CFG.popupSecondDelay) scheduleAuto(CFG.popupSecondDelay);
   }
 
   $$("[data-modal-close]", modal).forEach(function (el) { el.addEventListener("click", closeModal); });
@@ -268,22 +268,45 @@
     });
   })();
 
-  // Auto popup: first after 5s, then again 15s after it is closed (max 2 automatic shows).
+  // Auto popup: after popupFirstDelay OR once the visitor scrolls past popupScrollDepth,
+  // whichever comes first. At most popupMaxAuto times per browser session.
+  var AUTO_MAX = CFG.popupMaxAuto != null ? CFG.popupMaxAuto : 1;
+  function session(key, val) {
+    try {
+      if (val === undefined) return sessionStorage.getItem(key);
+      sessionStorage.setItem(key, val);
+    } catch (e) { return null; }
+  }
+  autoShown = +session("hd_popup_auto") || 0;
   function leadSubmitted() { return store("hd_lead_submitted") === "1"; }
   function userIsBusy() {
     var a = doc.activeElement;
     return isOpen(modal) || isOpen(drawer) || (a && a.closest && a.closest("#lead-form"));
   }
+  function showAuto(reason) {
+    clearTimeout(autoTimer);
+    if (autoShown >= AUTO_MAX || leadSubmitted()) return;
+    if (userIsBusy()) { scheduleAuto(4000); return; }
+    autoShown++;
+    session("hd_popup_auto", String(autoShown));
+    openModal({ source: "popup_auto_" + reason });
+  }
   function scheduleAuto(ms) {
     clearTimeout(autoTimer);
-    if (autoShown >= 2 || leadSubmitted()) return;
-    autoTimer = setTimeout(function () {
-      if (userIsBusy()) { scheduleAuto(4000); return; }
-      autoShown++;
-      openModal({ source: autoShown === 1 ? "popup_auto_5s" : "popup_auto_15s" });
-    }, ms);
+    if (autoShown >= AUTO_MAX || leadSubmitted()) return;
+    autoTimer = setTimeout(function () { showAuto("timer"); }, ms);
   }
-  scheduleAuto(CFG.popupFirstDelay || 5000);
+  scheduleAuto(CFG.popupFirstDelay || 20000);
+  if (CFG.popupScrollDepth) {
+    var onDepth = throttle(function () {
+      var max = html.scrollHeight - window.innerHeight;
+      if (max > 0 && window.scrollY / max >= CFG.popupScrollDepth) {
+        window.removeEventListener("scroll", onDepth);
+        if (autoShown < AUTO_MAX && !isOpen(modal)) showAuto("scroll");
+      }
+    });
+    window.addEventListener("scroll", onDepth, { passive: true });
+  }
 
   /* ---------- Plans: selected plan chip ---------- */
   function setPlan(form, name) {
@@ -291,7 +314,7 @@
     form.elements.plan.value = name || "";
     box.hidden = !name;
     $("[data-plan-label]", box).textContent = name || "";
-    if (name) form.elements.service.value = "Website Development";
+    if (name) form.elements.service.value = "New Website";
   }
   $$(".lead-form").forEach(function (form) {
     $(".form-plan__clear", form).addEventListener("click", function () { setPlan(form, ""); });
@@ -395,30 +418,46 @@
 
       submitting = true;
       var done = false;
+      var body = new URLSearchParams(data).toString();
+      var post = function (mode) {
+        return fetch(CFG.sheetEndpoint, {
+          method: "POST",
+          mode: mode,
+          keepalive: true,
+          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+          body: body
+        });
+      };
       var finish = function () { if (!done) { done = true; goThankYou(data); } };
-      setTimeout(finish, 6000);
+      var fail = function () {
+        if (done) return;
+        done = true;
+        submitting = false;
+        btn.disabled = false;
+        btn.classList.remove("is-loading");
+        track("lead_submit_error", { form_source: data.source });
+        errorBox.textContent = "";
+        errorBox.appendChild(doc.createTextNode("We couldn't save your details. Please try again or "));
+        var a = doc.createElement("a");
+        a.href = waLink(waSummary(data)); a.target = "_blank"; a.rel = "noopener";
+        a.textContent = "send them on WhatsApp";
+        errorBox.appendChild(a);
+        errorBox.hidden = false;
+      };
+      // Slow network: the keepalive request carries on after we leave the page.
+      setTimeout(finish, 12000);
 
-      fetch(CFG.sheetEndpoint, {
-        method: "POST",
-        mode: "no-cors", // Apps Script sends no CORS headers; the row is still saved
-        keepalive: true,
-        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-        body: new URLSearchParams(data).toString()
-      })
-        .then(finish)
-        .catch(function () {
+      // Apps Script answers with CORS headers, so we can read {ok:true|false}
+      // and only show the thank-you page when the lead was really saved.
+      post("cors")
+        .then(function (res) { return res.json(); })
+        .then(function (r) { if (r && r.ok) finish(); else fail(); })
+        .catch(function (err) {
           if (done) return;
-          done = true;
-          submitting = false;
-          btn.disabled = false;
-          btn.classList.remove("is-loading");
-          errorBox.textContent = "";
-          errorBox.appendChild(doc.createTextNode("Network issue. Please try again or "));
-          var a = doc.createElement("a");
-          a.href = waLink(waSummary(data)); a.target = "_blank"; a.rel = "noopener";
-          a.textContent = "send your details on WhatsApp";
-          errorBox.appendChild(a);
-          errorBox.hidden = false;
+          // A bad JSON reply means the script ran but errored → real failure.
+          if (err && err.name === "SyntaxError") { fail(); return; }
+          // Network/CORS hiccup: retry once the old opaque way before giving up.
+          post("no-cors").then(finish, fail);
         });
     });
   });

@@ -11,42 +11,53 @@ var NOTIFY_EMAIL = "business.howlers@gmail.com";
 var HEADERS = ["Timestamp", "Name", "Email", "Phone", "Service", "Plan", "Source", "Page", "Status"];
 
 function doPost(e) {
+  var p = (e && e.parameter) || {};
+  if (p.company_website) return json({ ok: true }); // spam trap
+
+  var lead = {
+    name: clean(p.name),
+    email: clean(p.email),
+    phone: clean(p.phone),
+    service: clean(p.service),
+    plan: clean(p.plan),
+    source: clean(p.source),
+    page: clean(p.page)
+  };
+  if (!lead.name || !lead.phone) return json({ ok: false, error: "missing fields" });
+
+  // Save to the sheet and send the email independently: if one fails the
+  // other still captures the lead, so it is never lost silently.
+  var saved = false, mailed = false, errors = [];
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  var locked = lock.tryLock(10000);
   try {
-    var p = (e && e.parameter) || {};
-    if (p.company_website) return json({ ok: true }); // spam trap
-
-    var lead = {
-      name: clean(p.name),
-      email: clean(p.email),
-      phone: clean(p.phone),
-      service: clean(p.service),
-      plan: clean(p.plan),
-      source: clean(p.source),
-      page: clean(p.page)
-    };
-
     getSheet().appendRow([
       new Date(), lead.name, lead.email, lead.phone, lead.service,
       lead.plan, lead.source, lead.page, "New"
     ]);
-
-    notify(lead);
-    return json({ ok: true });
+    saved = true;
   } catch (err) {
-    return json({ ok: false, error: String(err) });
+    errors.push("sheet: " + err);
   } finally {
-    lock.releaseLock();
+    if (locked) lock.releaseLock();
   }
+
+  try {
+    notify(lead, saved ? "" : "⚠️ Could not save this lead to the sheet — add it manually. (" + errors.join("; ") + ")");
+    mailed = true;
+  } catch (err) {
+    errors.push("mail: " + err);
+  }
+
+  return json({ ok: saved || mailed, saved: saved, mailed: mailed, error: errors.join("; ") || undefined });
 }
 
 function doGet() {
   return json({ ok: true, message: "Howlers Digitals lead endpoint is running." });
 }
 
-function notify(lead) {
-  if (!NOTIFY_EMAIL) return;
+function notify(lead, warning) {
+  if (!NOTIFY_EMAIL) throw new Error("NOTIFY_EMAIL not set");
   var digits = lead.phone.replace(/\D/g, "");
   if (digits.length === 10) digits = "91" + digits;
   var rows = [
@@ -56,6 +67,7 @@ function notify(lead) {
   var html =
     '<div style="font-family:Arial,sans-serif;max-width:520px">' +
     '<h2 style="margin:0 0 12px;color:#FF6B00">New website lead 🎉</h2>' +
+    (warning ? '<p style="background:#fff3cd;padding:10px;border-radius:6px;color:#7a4b00">' + escapeHtml(warning) + "</p>" : "") +
     '<table style="border-collapse:collapse;width:100%">' +
     rows.map(function (r) {
       return '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;width:90px">' + r[0] +

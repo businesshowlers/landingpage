@@ -14,7 +14,9 @@ window.SITE_CONFIG = {
   // Page shown after a form is submitted
   thankYouUrl: "thank-you.html",
 
-  // Auto popup timings (milliseconds)
-  popupFirstDelay: 5000,   // first popup after page load
-  popupSecondDelay: 15000  // second popup after the first one is closed
+  // Auto popup (shown once per visit, never after a lead is submitted)
+  popupFirstDelay: 25000,  // ms after page load…
+  popupScrollDepth: 0.5,   // …or when the visitor has scrolled 50% of the page (0 = off)
+  popupMaxAuto: 1,         // max automatic popups per browser session
+  popupSecondDelay: 0      // ms after closing to show again (0 = never); needs popupMaxAuto ≥ 2
 };

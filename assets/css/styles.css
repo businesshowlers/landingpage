@@ -928,7 +928,11 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -.025em; line-height: 
 .btn:disabled { opacity: .85; cursor: progress; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .form-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; font-size: 13.5px; color: var(--muted); text-align: center; }
-.form-note .i { width: 16px; height: 16px; color: var(--orange); }
+.form-note .i { width: 16px; height: 16px; color: var(--orange); flex-shrink: 0; }
+.form-note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.form-note a:hover { color: var(--orange); }
+.form-note { text-align: left; }
+.form-note--modal { display: block; text-align: center; margin-top: 10px; font-size: 12.5px; opacity: .8; }
 .form-error { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: #fff1f1; color: #b4232a; font-size: 14px; }
 .form-error a { text-decoration: underline; font-weight: 600; }
 
@@ -1414,3 +1418,117 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -.035em; }
 .footer .brand__logo { height: 52px; }
 @media (max-width: 359px) { .brand__logo { height: 38px; } }
 .final__mark { width: 73px; height: 72px; }
+
+/* =========================================================
+   NO-AI BADGE (hero)
+   ========================================================= */
+.hero__sub b { color: #fff; font-weight: 700; }
+.noai {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-top: 18px; padding: 7px 14px 7px 7px;
+  border-radius: 999px;
+  font-size: 13.5px; color: var(--d-muted);
+  background: linear-gradient(rgba(16, 16, 16, .9), rgba(16, 16, 16, .9)) padding-box,
+              linear-gradient(120deg, rgba(255, 107, 0, .7), rgba(255, 255, 255, .08) 60%, rgba(255, 133, 0, .5)) border-box;
+  border: 1px solid transparent;
+}
+.noai b { color: #fff; font-weight: 700; }
+.noai__icon { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--grad); color: #fff; flex-shrink: 0; box-shadow: 0 6px 16px -6px rgba(255, 107, 0, .9); }
+.noai__icon .i { width: 15px; height: 15px; stroke-width: 2.6; }
+
+/* =========================================================
+   PREMIUM MOBILE LAYER (≤ 767px)
+   ========================================================= */
+a, button { -webkit-tap-highlight-color: transparent; }
+::selection { background: rgba(255, 107, 0, .25); }
+
+@media (max-width: 767px) {
+  :root { --section-y: 64px; --gutter: 18px; }
+  body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+
+  /* Header: slimmer logo, crisp glass bar */
+  .brand__logo { height: 40px; }
+  .header.is-scrolled { box-shadow: 0 1px 0 rgba(255, 255, 255, .06), 0 10px 30px -14px rgba(0, 0, 0, .8); }
+
+  /* Typography rhythm */
+  .h2 { font-size: clamp(29px, 8.2vw, 36px); line-height: 1.12; letter-spacing: -.03em; }
+  .lead { font-size: 15.5px; line-height: 1.6; }
+  .shead { margin-bottom: 30px; }
+  .eyebrow { font-size: 11.5px; }
+
+  /* Hero */
+  .hero__title { font-size: clamp(32px, 9.4vw, 44px); line-height: 1.06; letter-spacing: -.035em; }
+  .hero__sub { font-size: 16px; line-height: 1.6; }
+  .hero__benefits { gap: 8px; margin-top: 22px; }
+  .hero__benefits li { font-size: 13.5px; padding: 9px 10px; border-radius: 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02)); }
+  .hero__ctas { margin-top: 24px; gap: 10px; }
+  .hero__trust { justify-content: center; font-size: 12.5px; gap: 6px 14px; }
+
+  /* Buttons: tactile press */
+  .btn { transition: transform .15s var(--ease), box-shadow .2s, background .2s; }
+  .btn--lg { min-height: 56px; border-radius: 16px; font-size: 16px; }
+  .btn:active, .mbar a:active, .clink:active, .qa button:active { transform: scale(.97); }
+
+  /* Services: premium 2-column tiles */
+  .services { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .svc--primary { grid-column: 1 / -1; padding: 24px 20px; border-radius: 22px; }
+  .svc--primary h3 { font-size: 26px; }
+  .svc--primary .btn { width: 100%; }
+  .svc--primary .codebox { width: 100%; }
+  .svc:not(.svc--primary) {
+    flex-direction: column; gap: 12px; padding: 16px 14px 18px; border-radius: 18px;
+    background: linear-gradient(180deg, #fff, #fbfbfb);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .02), 0 12px 28px -22px rgba(0, 0, 0, .35);
+  }
+  .svc:not(.svc--primary) h3 { font-size: 15px; line-height: 1.25; }
+  .svc:not(.svc--primary) p { font-size: 13px; line-height: 1.5; margin-top: 4px; }
+  .svc:not(.svc--primary) .svc__icon { width: 40px; height: 40px; border-radius: 12px; }
+  .svc:not(.svc--primary):last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px; }
+
+  /* Plans */
+  .plan { border-radius: 24px; }
+  .price__now { letter-spacing: -.04em; }
+  .checks li { font-size: 14.5px; }
+  .plans-note { font-size: 12.5px; line-height: 1.6; }
+
+  /* Comparison */
+  .cmp { padding: 22px 18px; border-radius: 22px; }
+  .cmp h3 { font-size: 18px; }
+  .cmp li { font-size: 14.5px; }
+  .cmp ul { gap: 12px; }
+
+  /* Features: tighter tiles */
+  .feat { border-radius: 18px; }
+
+  /* FAQ: card list */
+  .faq { gap: 8px; }
+  .qa { border-radius: 16px; box-shadow: 0 10px 24px -22px rgba(0, 0, 0, .4); }
+  .qa button { font-size: 15px; }
+
+  /* Contact form card */
+  .form-card { border-radius: 24px; }
+  .field input, .field select { font-size: 16px; } /* no iOS zoom on focus */
+
+  /* Footer: compact, centred bottom line */
+  .footer { padding-top: 44px; }
+  .footer__top { gap: 28px 20px; }
+  .footer__bottom { margin-top: 32px; text-align: center; }
+  .footer .brand__logo { height: 44px; }
+
+  /* Sticky action bar: premium floating pill */
+  .mbar { left: 10px; right: 10px; padding: 5px; border-radius: 22px; background: rgba(12, 12, 12, .96); border-color: rgba(255, 255, 255, .12); box-shadow: 0 18px 40px -10px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 255, 255, .06); }
+  .mbar a { min-height: 52px; border-radius: 17px; }
+
+  /* No-AI badge */
+  .noai { font-size: 12.5px; }
+}
+
+@media (max-width: 374px) {
+  .svc:not(.svc--primary) p { display: none; }
+  .hero__benefits li { font-size: 12.5px; }
+}
+
+/* Plan item that is NOT included (e.g. Standard: domain & hosting) */
+.checks li.is-excluded { opacity: .62; }
+.checks li.is-excluded .i { background: rgba(150, 150, 160, .22) !important; color: currentColor !important; box-shadow: none !important; }
+.plans-note b { color: inherit; font-weight: 700; }
